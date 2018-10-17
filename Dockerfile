@@ -1,17 +1,14 @@
-ARG BUILD_FROM=arm32v7/python:3
-FROM $BUILD_FROM
+FROM arm32v7/python:3
 
 ENV LANG C.UTF-8
 
 # Install requirements for add-on
-RUN apk --no-cache add python3 jq mosquitto-clients
-RUN apk add --update \
+RUN apt-get update && apt-get install -y \
     python \
     python-dev \
-    py-pip \
-    build-base \
-    && pip install virtualenv \
-    && rm -rf /var/cache/apk/*
+    python3 \
+    mosquitto-clients \
+    && rm -rf /var/lib/apt/lists/*
 RUN pip install RPi.GPIO
 
 # Copy data for add-on
