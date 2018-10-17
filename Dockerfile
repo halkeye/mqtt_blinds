@@ -4,6 +4,7 @@ ENV LANG C.UTF-8
 
 # Install requirements for add-on
 RUN apt-get update && apt-get install -y \
+    dnsutils \
     python \
     python-dev \
     python3 \
