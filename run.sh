@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 SRV=$(dig _mqtt._tcp srv +short +search)
 # possible options for processing
