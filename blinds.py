@@ -55,7 +55,7 @@ CMD_CHANNEL = {
     "8": [[PIN_BANK2_CHANNEL1, PIN_BANK2_CHANNEL2], [GPIO.LOW, GPIO.LOW]]
 }
 
-INVERSE_CHANNELS = ["1", "2", "4", "8"]
+INVERSE_CHANNELS = ["1", "2"]
 
 if len(sys.argv) != 3:
     print("%s <channel> <open|close>" % sys.argv[0])
