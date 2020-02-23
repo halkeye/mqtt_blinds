@@ -10,10 +10,10 @@ TOPIC=home/blinds/set
 OVERRIDE_HOST=""
 
 if [ ! -z $MQTT_SERVER ]; then
-  OVERRIDE_HOST=$OVERRIDE_HOST -h "$MQTT_SERVER"
+  OVERRIDE_HOST="$OVERRIDE_HOST -h $MQTT_SERVER"
 fi
 if [ ! -z $MQTT_PORT ]; then
-  OVERRIDE_HOST=$OVERRIDE_HOST -p "$MQTT_PORT"
+  OVERRIDE_HOST="$OVERRIDE_HOST -p $MQTT_PORT"
 fi
 # read data
 while read -r message
