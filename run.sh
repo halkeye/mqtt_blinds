@@ -7,7 +7,14 @@ SRV=$(dig _mqtt._tcp srv +short +search)
 MQTT_SERVER=$(echo $SRV | awk '{print $4}' | sed 's/\.$//')
 MQTT_PORT=$(echo $SRV | awk '{print $3}' | sed 's/\.$//')
 TOPIC=home/blinds/set
+OVERRIDE_HOST=""
 
+if [ ! -z $MQTT_SERVER ]; then
+  OVERRIDE_HOST=$OVERRIDE_HOST -h "$MQTT_SERVER"
+fi
+if [ ! -z $MQTT_PORT ]; then
+  OVERRIDE_HOST=$OVERRIDE_HOST -p "$MQTT_PORT"
+fi
 # read data
 while read -r message
 do
@@ -21,4 +28,4 @@ do
     fi
   done
 
-done < <(mosquitto_sub -h "$MQTT_SERVER" -p "$MQTT_PORT" -u "$USER" -P "$PASSWORD" -t "$TOPIC" -q 1)
+done < <(mosquitto_sub $OVERRIDE_HOST -u "$USER" -P "$PASSWORD" -t "$TOPIC" -q 1)
