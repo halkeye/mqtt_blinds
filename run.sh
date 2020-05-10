@@ -2,7 +2,7 @@
 set -e
 set -x
 
-SRV=$(dig _mqtt._tcp srv +short +search)
+SRV=$(dig _mqtt._tcp.$(grep domain /etc/resolv.conf | awk '{print $2}') srv +short)
 # possible options for processing
 MQTT_SERVER=$(echo $SRV | awk '{print $4}' | sed 's/\.$//')
 MQTT_PORT=$(echo $SRV | awk '{print $3}' | sed 's/\.$//')
