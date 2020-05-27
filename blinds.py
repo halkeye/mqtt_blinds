@@ -111,8 +111,6 @@ def on_message(client, userdata, msg):
     channel = str(msg.topic.split("/")[-1])
     mode = msg.payload.decode('ascii').lower()
 
-    time.sleep(0.5)
-
     if channel in INVERSE_CHANNELS:
         print("inversing")
         if mode == "open" or mode == "on":
@@ -126,6 +124,9 @@ def on_message(client, userdata, msg):
     print(CMD_CHANNEL[channel][0], CMD_CHANNEL[channel][1])
     GPIO.output(CMD_CHANNEL[channel][0], CMD_CHANNEL[channel][1])
 
+    # sleep after channel selection so it takes effect properly
+    time.sleep(0.5)
+
     if mode == "close" or mode == "off":
         print(CMD_CLOSE[channel], GPIO.HIGH)
         GPIO.output(CMD_CLOSE[channel], GPIO.HIGH)
@@ -134,6 +135,9 @@ def on_message(client, userdata, msg):
         GPIO.output(CMD_OPEN[channel], GPIO.HIGH)
     else:
         print("not sure what to do with mode(" + mode + ") and channel(" + channel + ")")
+
+    # sleep after command is issued so it has time to send/clear
+    time.sleep(1)
 
     GPIO.cleanup()
 
