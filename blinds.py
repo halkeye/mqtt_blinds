@@ -73,17 +73,6 @@ CMD_CHANNEL = {
 }
 
 INVERSE_CHANNELS = ["1", "2"]
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(PIN_BANK1_CHANNEL2, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(PIN_BANK1_CHANNEL1, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(PIN_BANK1_CLOSE, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(PIN_BANK1_OPEN, GPIO.OUT, initial=GPIO.LOW)
-
-GPIO.setup(PIN_BANK2_CHANNEL2, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(PIN_BANK2_CHANNEL1, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(PIN_BANK2_CLOSE, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(PIN_BANK2_OPEN, GPIO.OUT, initial=GPIO.LOW)
-
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -107,6 +96,17 @@ def on_connect(client, userdata, flags, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
+
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(PIN_BANK1_CHANNEL2, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(PIN_BANK1_CHANNEL1, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(PIN_BANK1_CLOSE, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(PIN_BANK1_OPEN, GPIO.OUT, initial=GPIO.LOW)
+
+    GPIO.setup(PIN_BANK2_CHANNEL2, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(PIN_BANK2_CHANNEL1, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(PIN_BANK2_CLOSE, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(PIN_BANK2_OPEN, GPIO.OUT, initial=GPIO.LOW)
 
     channel = str(msg.topic.split("/")[-1])
     mode = msg.payload.decode('ascii').lower()
@@ -135,6 +135,8 @@ def on_message(client, userdata, msg):
     else:
         print("not sure what to do with mode(" + mode + ") and channel(" + channel + ")")
 
+    GPIO.cleanup()
+
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
@@ -147,4 +149,3 @@ client.connect(os.environ['MQTT_SERVER'], int(os.environ['MQTT_PORT']), 60)
 # Other loop*() functions are available that give a threaded interface and a
 # manual interface.
 client.loop_forever()
-GPIO.cleanup()
