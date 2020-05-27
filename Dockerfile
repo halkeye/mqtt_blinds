@@ -1,19 +1,10 @@
-FROM arm32v7/python:3
+FROM python:3
 
-ENV LANG C.UTF-8
+WORKDIR /usr/src/app
 
-# Install requirements for add-on
-RUN apt-get update && apt-get install -y \
-    dnsutils \
-    python \
-    python-dev \
-    python3 \
-    mosquitto-clients \
-    && rm -rf /var/lib/apt/lists/*
-RUN pip install RPi.GPIO
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy data for add-on
-COPY run.sh blinds.py /
-RUN chmod a+x /run.sh
+COPY . .
 
-CMD [ "/run.sh" ]
+CMD [ "python", "./blinds.py" ]

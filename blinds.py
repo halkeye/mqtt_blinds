@@ -1,8 +1,25 @@
-import sys
+import os
 import time
+import paho.mqtt.client as mqtt
+from json import dumps
+
 try:
     import RPi.GPIO as GPIO
 except RuntimeError:
+
+    class GPIO:
+        HIGH = 0
+        LOW = 0
+        OUT = 0
+        IN = 0
+        BOARD = 0
+
+        def setmode(*args):
+            pass
+
+        def setup(*args, **kwargs):
+            pass
+
     print(
         "Error importing RPi.GPIO!  " +
         "This is probably because you need superuser privileges.  " +
@@ -56,12 +73,6 @@ CMD_CHANNEL = {
 }
 
 INVERSE_CHANNELS = ["1", "2"]
-
-if len(sys.argv) != 3:
-    print("%s <channel> <open|close>" % sys.argv[0])
-    sys.exit()
-
-print("Setting mode")
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(PIN_BANK1_CHANNEL2, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(PIN_BANK1_CHANNEL1, GPIO.OUT, initial=GPIO.LOW)
@@ -73,26 +84,66 @@ GPIO.setup(PIN_BANK2_CHANNEL1, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(PIN_BANK2_CLOSE, GPIO.OUT, initial=GPIO.LOW)
 GPIO.setup(PIN_BANK2_OPEN, GPIO.OUT, initial=GPIO.LOW)
 
-channel = str(sys.argv[1])
-mode = str(sys.argv[2])
-if channel in INVERSE_CHANNELS:
-    print("inversing")
-    if mode == "open":
-        mode = "close"
-    elif mode == "close":
-        mode = "open"
 
-print("select channel %s" % channel)
+# The callback for when the client receives a CONNACK response from the server.
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code "+str(rc))
 
-print(CMD_CHANNEL[channel][0], CMD_CHANNEL[channel][1])
-GPIO.output(CMD_CHANNEL[channel][0], CMD_CHANNEL[channel][1])
-time.sleep(0.5)
-print("select %s" % mode)
-if mode == "close":
-    print(CMD_CLOSE[channel], GPIO.HIGH)
-    GPIO.output(CMD_CLOSE[channel], GPIO.HIGH)
-if mode == "open":
-    print(CMD_OPEN[channel], GPIO.HIGH)
-    GPIO.output(CMD_OPEN[channel], GPIO.HIGH)
-time.sleep(1)
+    # Subscribing in on_connect() means that if we lose the connection and
+    # reconnect then subscriptions will be renewed.
+    client.subscribe("home/blinds/set/#")
+
+    for key in CMD_OPEN:
+        client.publish(
+            "homeassistant/switch/blinds" + key + "/config",
+            payload=dumps({
+                'name': os.environ.get('BLINDS_NAME_' + key, 'blinds' + key),
+                'command_topic': 'home/blinds/set/' + key
+            }),
+            retain=True
+        )
+
+
+# The callback for when a PUBLISH message is received from the server.
+def on_message(client, userdata, msg):
+
+    channel = str(msg.topic.split("/")[-1])
+    mode = msg.payload.decode('ascii').lower()
+
+    time.sleep(0.5)
+
+    if channel in INVERSE_CHANNELS:
+        print("inversing")
+        if mode == "open" or mode == "on":
+            mode = "close"
+        elif mode == "close" or mode == "off":
+            mode = "open"
+
+    print("Setting mode of " + mode)
+    print("select channel %s" % channel)
+
+    print(CMD_CHANNEL[channel][0], CMD_CHANNEL[channel][1])
+    GPIO.output(CMD_CHANNEL[channel][0], CMD_CHANNEL[channel][1])
+
+    if mode == "close" or mode == "off":
+        print(CMD_CLOSE[channel], GPIO.HIGH)
+        GPIO.output(CMD_CLOSE[channel], GPIO.HIGH)
+    elif mode == "open" or mode == "on":
+        print(CMD_OPEN[channel], GPIO.HIGH)
+        GPIO.output(CMD_OPEN[channel], GPIO.HIGH)
+    else:
+        print("not sure what to do with mode(" + mode + ") and channel(" + channel + ")")
+
+client = mqtt.Client()
+client.on_connect = on_connect
+client.on_message = on_message
+
+print('client.connect(' + os.environ['MQTT_SERVER'] + ', ' + str(os.environ['MQTT_PORT']) + ', 60)')
+client.connect(os.environ['MQTT_SERVER'], int(os.environ['MQTT_PORT']), 60)
+
+# Blocking call that processes network traffic, dispatches callbacks and
+# handles reconnecting.
+# Other loop*() functions are available that give a threaded interface and a
+# manual interface.
+client.loop_forever()
 GPIO.cleanup()
