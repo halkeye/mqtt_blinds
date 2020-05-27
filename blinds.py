@@ -84,9 +84,10 @@ def on_connect(client, userdata, flags, rc):
 
     for key in CMD_OPEN:
         client.publish(
-            "homeassistant/switch/blinds" + key + "/config",
+            "homeassistant/cover/blinds" + key + "/config",
             payload=dumps({
                 'name': os.environ.get('BLINDS_NAME_' + key, 'blinds' + key),
+                'device_class': 'shade',
                 'unique_id': 'blinds_' + key,
                 'command_topic': 'home/blinds/set/' + key
             }),
