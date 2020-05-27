@@ -98,6 +98,7 @@ def on_connect(client, userdata, flags, rc):
             "homeassistant/switch/blinds" + key + "/config",
             payload=dumps({
                 'name': os.environ.get('BLINDS_NAME_' + key, 'blinds' + key),
+                'unique_id': 'blinds_' + key,
                 'command_topic': 'home/blinds/set/' + key
             }),
             retain=True
