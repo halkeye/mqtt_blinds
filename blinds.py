@@ -79,6 +79,9 @@ def on_disconnect(client, userdata, rc):
     print("Reconnecting")
     client.connect(os.environ['MQTT_SERVER'], int(os.environ['MQTT_PORT']), 60)
 
+def on_subscribe(client, userdata, mid, granted_qos):
+    print("on_subscribe " + str(mid) + " --- " + str(granted_qos))
+
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -86,7 +89,6 @@ def on_connect(client, userdata, flags, rc):
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     client.subscribe("home/blinds/set/#")
-
     publish_configs(client)
 
 def publish_configs(client):
@@ -106,8 +108,8 @@ def publish_configs(client):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print("Received message '" + str(message.payload) + "' on topic '"
-            + message.topic + "' with QoS " + str(message.qos))
+    print("Received message '" + str(msg.payload) + "' on topic '"
+            + msg.topic + "' with QoS " + str(msg.qos))
 
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(PIN_BANK1_CHANNEL2, GPIO.OUT, initial=GPIO.LOW)
@@ -153,10 +155,17 @@ def on_message(client, userdata, msg):
 
     GPIO.cleanup()
 
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 client = mqtt.Client()
+client.enable_logger(logger)
 client.on_connect = on_connect
 client.on_message = on_message
 client.on_disconnect = on_disconnect
+client.on_subscribe = on_subscribe
 
 print('client.connect(' + os.environ['MQTT_SERVER'] + ', ' + str(os.environ['MQTT_PORT']) + ', 60)')
 client.connect(os.environ['MQTT_SERVER'], int(os.environ['MQTT_PORT']), 60)
