@@ -90,6 +90,7 @@ def on_connect(client, userdata, flags, rc):
     publish_configs(client)
 
 def publish_configs(client):
+    print("Publishing config - covers")
     for key in CMD_OPEN:
         client.publish(
             "homeassistant/cover/blinds" + key + "/config",
