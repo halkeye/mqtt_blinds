@@ -74,6 +74,11 @@ CMD_CHANNEL = {
 
 INVERSE_CHANNELS = ["1", "2"]
 
+def on_disconnect(client, userdata, rc):
+    print("Disconnected")
+    print("Reconnecting")
+    client.connect(os.environ['MQTT_SERVER'], int(os.environ['MQTT_PORT']), 60)
+
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -82,6 +87,9 @@ def on_connect(client, userdata, flags, rc):
     # reconnect then subscriptions will be renewed.
     client.subscribe("home/blinds/set/#")
 
+    publish_configs(client)
+
+def publish_configs(client):
     for key in CMD_OPEN:
         client.publish(
             "homeassistant/cover/blinds" + key + "/config",
@@ -91,12 +99,14 @@ def on_connect(client, userdata, flags, rc):
                 'unique_id': 'blinds_' + key,
                 'command_topic': 'home/blinds/set/' + key
             }),
-            retain=True
+            retain=False
         )
 
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
+    print("Received message '" + str(message.payload) + "' on topic '"
+            + message.topic + "' with QoS " + str(message.qos))
 
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(PIN_BANK1_CHANNEL2, GPIO.OUT, initial=GPIO.LOW)
@@ -145,6 +155,7 @@ def on_message(client, userdata, msg):
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
+client.on_disconnect = on_disconnect
 
 print('client.connect(' + os.environ['MQTT_SERVER'] + ', ' + str(os.environ['MQTT_PORT']) + ', 60)')
 client.connect(os.environ['MQTT_SERVER'], int(os.environ['MQTT_PORT']), 60)
@@ -153,4 +164,9 @@ client.connect(os.environ['MQTT_SERVER'], int(os.environ['MQTT_PORT']), 60)
 # handles reconnecting.
 # Other loop*() functions are available that give a threaded interface and a
 # manual interface.
-client.loop_forever()
+client.loop_start()
+
+while True:
+    publish_configs(client)
+    # 15 min
+    time.sleep(60*15)
